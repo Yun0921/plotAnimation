@@ -191,9 +191,20 @@ def create_angle_animation(df, output_path):
         ax.set_xlabel('Pair Index')
         ax.set_ylabel('Angle (degree)')
         ax.set_title(f'{title} Angle')
-        ax.grid(True)
+        
+        # 設置主網格和次網格
+        ax.grid(True, which='major', linewidth=0.8, linestyle='-', color='#CCCCCC')
+        ax.grid(True, which='minor', linewidth=0.5, linestyle=':', color='#DDDDDD')
+        ax.minorticks_on()  # 啟用次要刻度
+        
+        # 強調 y=0 的橫軸
+        ax.axhline(y=0, color='k', linewidth=1.5)
+        
+        # 設置邊框顏色和粗細
+        for spine in ax.spines.values():
+            spine.set_linewidth(0.8)
+        
         ax.legend()
-        # 設置 x 軸為整數刻度
         ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
     # 準備數據
@@ -375,7 +386,19 @@ def create_combined_animation(df, output_path):
         ax.set_xlabel('Pair Index')
         ax.set_ylabel('Angle (degree)')
         ax.set_title(f'{title} Angle')
-        ax.grid(True)
+        
+        # 設置主網格和次網格
+        ax.grid(True, which='major', linewidth=0.8, linestyle='-', color='#CCCCCC')
+        ax.grid(True, which='minor', linewidth=0.5, linestyle=':', color='#DDDDDD')
+        ax.minorticks_on()  # 啟用次要刻度
+        
+        # 強調 y=0 的橫軸
+        ax.axhline(y=0, color='k', linewidth=1.5)
+        
+        # 設置邊框顏色和粗細
+        for spine in ax.spines.values():
+            spine.set_linewidth(0.8)
+        
         ax.legend()
         ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
