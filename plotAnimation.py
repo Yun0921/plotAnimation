@@ -43,6 +43,15 @@ ax_xy = fig.add_subplot(gs[0, 1])                    # 右上
 ax_yz = fig.add_subplot(gs[1, 1])                    # 右中
 ax_xz = fig.add_subplot(gs[2, 1])                    # 右下
 
+# 建立角度圖的新視窗
+fig_angles = plt.figure(figsize=(16, 8))
+gs_angles = gridspec.GridSpec(3, 1)
+
+# 添加角度圖
+ax_roll = fig_angles.add_subplot(gs_angles[0])    # 第一排
+ax_pitch = fig_angles.add_subplot(gs_angles[1])   # 第二排
+ax_yaw = fig_angles.add_subplot(gs_angles[2])     # 第三排
+
 # 設定 3D 圖
 ax_3d.set_xlim(mins[0], maxs[0])
 ax_3d.set_ylim(mins[1], maxs[1])
@@ -52,8 +61,13 @@ ax_3d.set_ylabel("Y")
 ax_3d.set_zlabel("Z")
 ax_3d.set_title("3D View")
 
-# 調整子圖間距
+# 調整主視窗子圖間距
+plt.figure(fig.number)  # 切換到主視窗
 plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.3, hspace=0.3)
+
+# 調整角度圖視窗的子圖間距
+plt.figure(fig_angles.number)  # 切換到角度圖視窗
+plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08, hspace=0.3)
 
 # 設定平面圖
 for ax, title, x_label, y_label, x_idx, y_idx in zip(
@@ -112,6 +126,54 @@ ax_3d.legend(
     fontsize=9
 )
 
+# 創建角度圖的線條
+roll_true, = ax_roll.plot([], [], 'r-', label='True Roll')
+roll_pred, = ax_roll.plot([], [], 'b--', label='Predicted Roll')
+pitch_true, = ax_pitch.plot([], [], 'r-', label='True Pitch')
+pitch_pred, = ax_pitch.plot([], [], 'b--', label='Predicted Pitch')
+yaw_true, = ax_yaw.plot([], [], 'r-', label='True Yaw')
+yaw_pred, = ax_yaw.plot([], [], 'b--', label='Predicted Yaw')
+
+# 設置角度圖的標籤和範圍
+for ax, title in zip([ax_roll, ax_pitch, ax_yaw], ['Roll', 'Pitch', 'Yaw']):
+    ax.set_xlabel('Frame')
+    ax.set_ylabel('Angle (degree)')
+    ax.set_title(f'{title} Angle')
+    ax.grid(True)
+    ax.legend()
+
+# 設置角度圖的 x 軸範圍
+for ax in [ax_roll, ax_pitch, ax_yaw]:
+    ax.set_xlim(0, len(data))
+
+# 計算角度範圍
+angle_data = {
+    'roll': {'true': [], 'pred': []},
+    'pitch': {'true': [], 'pred': []},
+    'yaw': {'true': [], 'pred': []}
+}
+
+for i in range(len(df) - 1):
+    # 真實角度
+    angle_data['roll']['true'].append(df.loc[i + 1, 'gt_roll'])
+    angle_data['pitch']['true'].append(df.loc[i + 1, 'gt_pitch'])
+    angle_data['yaw']['true'].append(df.loc[i + 1, 'gt_yaw'])
+    # 預測角度
+    angle_data['roll']['pred'].append(df.loc[i, 'pred_roll'])
+    angle_data['pitch']['pred'].append(df.loc[i, 'pred_pitch'])
+    angle_data['yaw']['pred'].append(df.loc[i, 'pred_yaw'])
+
+# 設置角度圖的 y 軸範圍
+margin = 10  # 增加 10 度的邊界
+for ax, angle_type in zip([ax_roll, ax_pitch, ax_yaw], ['roll', 'pitch', 'yaw']):
+    true_min = min(angle_data[angle_type]['true'])
+    true_max = max(angle_data[angle_type]['true'])
+    pred_min = min(angle_data[angle_type]['pred'])
+    pred_max = max(angle_data[angle_type]['pred'])
+    y_min = min(true_min, pred_min) - margin
+    y_max = max(true_max, pred_max) + margin
+    ax.set_ylim(y_min, y_max)
+
 # 更新函數
 def update(frame):
     at1 = data[frame]["at1"]
@@ -162,17 +224,34 @@ def update(frame):
         
         updates += [p1_2d, p2_2d, pp_2d, l12_2d, lp_2d, past_trail_2d, future_trail_2d]
 
+    # 更新角度圖
+    x = list(range(frame + 1))
+    
+    # Roll
+    roll_true.set_data(x, angle_data['roll']['true'][:frame + 1])
+    roll_pred.set_data(x, angle_data['roll']['pred'][:frame + 1])
+    
+    # Pitch
+    pitch_true.set_data(x, angle_data['pitch']['true'][:frame + 1])
+    pitch_pred.set_data(x, angle_data['pitch']['pred'][:frame + 1])
+    
+    # Yaw
+    yaw_true.set_data(x, angle_data['yaw']['true'][:frame + 1])
+    yaw_pred.set_data(x, angle_data['yaw']['pred'][:frame + 1])
+    
+    updates += [roll_true, roll_pred, pitch_true, pitch_pred, yaw_true, yaw_pred]
+
     return updates
 
 # 動畫與顯示
 ani = FuncAnimation(fig, update, frames=len(data), interval=1000, blit=True)
-plt.tight_layout()
+ani_angles = FuncAnimation(fig_angles, update, frames=len(data), interval=1000, blit=True)
 
 # 確保輸出目錄存在
 output_dir = "animation_output"
 os.makedirs(output_dir, exist_ok=True)
 
-# 保存為 GIF
+# 保存為 GIF（只保存主視窗的動畫）
 gif_path = os.path.join(output_dir, "prediction_animation.gif")
 print(f"正在生成 GIF... 請稍候...")
 ani.save(gif_path, writer='pillow', fps=1)
