@@ -44,17 +44,17 @@ def create_trajectory_animation(df, output_path):
     ax_3d.set_xlim(mins[0], maxs[0])
     ax_3d.set_ylim(mins[1], maxs[1])
     ax_3d.set_zlim(mins[2], maxs[2])
-    ax_3d.set_xlabel("X")
-    ax_3d.set_ylabel("Y")
-    ax_3d.set_zlabel("Z")
+    ax_3d.set_xlabel("X (mm)")
+    ax_3d.set_ylabel("Y (mm)")
+    ax_3d.set_zlabel("Z (mm)")
     ax_3d.set_title("3D View")
 
     # 設定平面圖
     for ax, title, x_label, y_label, x_idx, y_idx in zip(
         [ax_xy, ax_yz, ax_xz],
         ["XY Plane", "YZ Plane", "XZ Plane"],
-        ["X", "Y", "X"],
-        ["Y", "Z", "Z"],
+        ["X (mm)", "Y (mm)", "X (mm)"],
+        ["Y (mm)", "Z (mm)", "Z (mm)"],
         [0, 1, 0],
         [1, 2, 2]
     ):
@@ -325,17 +325,17 @@ def create_combined_animation(df, output_path):
     ax_3d.set_xlim(mins[0], maxs[0])
     ax_3d.set_ylim(mins[1], maxs[1])
     ax_3d.set_zlim(mins[2], maxs[2])
-    ax_3d.set_xlabel("X")
-    ax_3d.set_ylabel("Y")
-    ax_3d.set_zlabel("Z")
+    ax_3d.set_xlabel("X (mm)")
+    ax_3d.set_ylabel("Y (mm)")
+    ax_3d.set_zlabel("Z (mm)")
     ax_3d.set_title("3D View")
 
     # 設定平面圖
     for ax, title, x_label, y_label, x_idx, y_idx in zip(
         [ax_xy, ax_yz, ax_xz],
         ["XY Plane", "YZ Plane", "XZ Plane"],
-        ["X", "Y", "X"],
-        ["Y", "Z", "Z"],
+        ["X (mm)", "Y (mm)", "X (mm)"],
+        ["Y (mm)", "Z (mm)", "Z (mm)"],
         [0, 1, 0],
         [1, 2, 2]
     ):
