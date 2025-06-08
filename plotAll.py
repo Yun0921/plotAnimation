@@ -16,7 +16,8 @@ def create_trajectory_animation(df, output_path):
         data.append({"at1": at1, "at2": at2, "at2_pred": at2_pred})
 
     # 計算完整軌跡
-    full_trajectory = np.array([d["at1"] for d in data])
+    full_trajectory = np.array([d["at1"] for d in data] + [data[-1]["at2"]])
+
 
     # 計算範圍
     all_points = np.array([d["at1"].tolist() + d["at2"].tolist() + d["at2_pred"].tolist() for d in data]).reshape(-1, 3)
@@ -544,9 +545,9 @@ def main():
             
         print(f"\n處理目錄: {subdir}")
         
-        # 在輸出目錄中創建對應的子目錄
-        subdir_output = os.path.join(output_dir, subdir)
-        os.makedirs(subdir_output, exist_ok=True)
+        # 🔻這裡不再建立子資料夾
+        # subdir_output = os.path.join(output_dir, subdir)
+        # os.makedirs(subdir_output, exist_ok=True)
         
         # 獲取該子目錄下的所有 CSV 文件
         csv_files = [f for f in os.listdir(subdir_path) if f.endswith('.csv')]
@@ -555,18 +556,16 @@ def main():
         for csv_file in csv_files:
             print(f"處理文件: {csv_file}")
             
-            # 讀取 CSV 檔案
             csv_path = os.path.join(subdir_path, csv_file)
             df = pd.read_csv(csv_path)
             
-            # 創建輸出文件名（保持與 CSV 文件相同的基本名稱）
-            output_filename = f"{os.path.splitext(csv_file)[0]}_animation.gif"
-            combined_path = os.path.join(subdir_output, output_filename)
+            output_filename = f"{subdir}_{os.path.splitext(csv_file)[0]}_animation.gif"
+            combined_path = os.path.join(output_dir, output_filename)
             
-            # 創建並保存組合動畫
             create_combined_animation(df, combined_path)
             
             print(f"已生成動畫: {output_filename}")
+
 
 if __name__ == "__main__":
     main() 
