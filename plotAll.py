@@ -527,19 +527,46 @@ def create_combined_animation(df, output_path):
     plt.close()
 
 def main():
-    # 讀取 CSV 檔案
-    csv_path = "demo_patient_07_predictions_last20.csv"
-    df = pd.read_csv(csv_path)
-
+    # 設定輸入和輸出目錄
+    input_dir = "demo_outputs"
+    output_dir = "animation_results"
+    
     # 確保輸出目錄存在
-    output_dir = "animation_output"
     os.makedirs(output_dir, exist_ok=True)
-
-    # 創建並保存組合動畫
-    combined_path = os.path.join(output_dir, "combined_animation.gif")
-    create_combined_animation(df, combined_path)
-
-    plt.show()
+    
+    # 遍歷所有子目錄
+    for subdir in os.listdir(input_dir):
+        subdir_path = os.path.join(input_dir, subdir)
+        
+        # 確保是目錄
+        if not os.path.isdir(subdir_path):
+            continue
+            
+        print(f"\n處理目錄: {subdir}")
+        
+        # 在輸出目錄中創建對應的子目錄
+        subdir_output = os.path.join(output_dir, subdir)
+        os.makedirs(subdir_output, exist_ok=True)
+        
+        # 獲取該子目錄下的所有 CSV 文件
+        csv_files = [f for f in os.listdir(subdir_path) if f.endswith('.csv')]
+        
+        # 處理每個 CSV 文件
+        for csv_file in csv_files:
+            print(f"處理文件: {csv_file}")
+            
+            # 讀取 CSV 檔案
+            csv_path = os.path.join(subdir_path, csv_file)
+            df = pd.read_csv(csv_path)
+            
+            # 創建輸出文件名（保持與 CSV 文件相同的基本名稱）
+            output_filename = f"{os.path.splitext(csv_file)[0]}_animation.gif"
+            combined_path = os.path.join(subdir_output, output_filename)
+            
+            # 創建並保存組合動畫
+            create_combined_animation(df, combined_path)
+            
+            print(f"已生成動畫: {output_filename}")
 
 if __name__ == "__main__":
     main() 
