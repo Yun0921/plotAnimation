@@ -566,6 +566,20 @@ def main():
             
             print(f"已生成動畫: {output_filename}")
 
+        # # 讀取 CSV 檔案
+        # csv_path = "demo_patient_07_predictions_last20.csv"
+        # df = pd.read_csv(csv_path)
+
+        # # 確保輸出目錄存在
+        # output_dir = "animation_output"
+        # os.makedirs(output_dir, exist_ok=True)
+
+        # # 創建並保存組合動畫
+        # combined_path = os.path.join(output_dir, "combined_animation.gif")
+        # create_combined_animation(df, combined_path)
+
+        # plt.show()
+
 
 if __name__ == "__main__":
     main() 
