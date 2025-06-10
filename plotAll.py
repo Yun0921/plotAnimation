@@ -34,13 +34,13 @@ def create_trajectory_animation(df, output_path):
 
     # 建立畫布與 gridspec
     fig = plt.figure(figsize=(16, 8))
-    gs = gridspec.GridSpec(3, 2, width_ratios=[2, 1])  # 3 row, 2 col layout
+    gs = gridspec.GridSpec(3, 3, width_ratios=[3, 1])  # 3 row, 2 col layout
 
     # 子圖分配
-    ax_3d = fig.add_subplot(gs[:, 0], projection='3d')   # 左半整排
-    ax_xy = fig.add_subplot(gs[0, 1])                    # 右上
-    ax_yz = fig.add_subplot(gs[1, 1])                    # 右中
-    ax_xz = fig.add_subplot(gs[2, 1])                    # 右下
+    ax_3d = fig.add_subplot(gs[:, 0:1], projection='3d')   # 左半整排
+    ax_xy = fig.add_subplot(gs[0, 2])                    # 右上
+    ax_yz = fig.add_subplot(gs[1, 2])                    # 右中
+    ax_xz = fig.add_subplot(gs[2, 2])                    # 右下
 
     # 設定 3D 圖
     ax_3d.set_xlim(mins[0], maxs[0])
@@ -288,12 +288,18 @@ def create_combined_animation(df, output_path):
     full_trajectory = np.array([d["at1"] for d in data] + [data[-1]["at2"]])
 
     all_points = np.array([d["at1"].tolist() + d["at2"].tolist() + d["at2_pred"].tolist() for d in data]).reshape(-1, 3)
+    
+    # 統一每張圖的座標比例尺
     mins = all_points.min(axis=0)
     maxs = all_points.max(axis=0)
     ranges = maxs - mins
     padding = ranges * 0.2
     mins -= padding
     maxs += padding
+    max_range = max(maxs - mins)
+    center = (maxs + mins) / 2
+    mins = center - max_range / 2
+    maxs = center + max_range / 2
 
     fig = plt.figure(figsize=(20, 16))
     main_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], hspace=0.3)
@@ -312,19 +318,23 @@ def create_combined_animation(df, output_path):
     ax_3d.set_xlim(mins[0], maxs[0])
     ax_3d.set_ylim(mins[1], maxs[1])
     ax_3d.set_zlim(mins[2], maxs[2])
-    ax_3d.set_xlabel("X (mm)")
-    ax_3d.set_ylabel("Y (mm)")
-    ax_3d.set_zlabel("Z (mm)")
-    ax_3d.set_title("3D View")
+    ax_3d.set_title("3D View", fontsize=18)
+    ax_3d.set_xlabel("X (mm)", fontsize=16)
+    ax_3d.set_ylabel("Y (mm)", fontsize=16)
+    ax_3d.set_zlabel("Z (mm)", fontsize=16)
+    ax_3d.tick_params(labelsize=14)
 
-    # 新增起點與終點標記
-    ax_3d.plot([full_trajectory[0][0]], [full_trajectory[0][1]], [full_trajectory[0][2]],
-               marker='s', color='green', markersize=4, label='Start')
+
+
+    ax_3d.set_box_aspect([1, 1, 1])  # 保持三軸間格一致
+
+    start_marker, = ax_3d.plot([full_trajectory[0][0]], [full_trajectory[0][1]], [full_trajectory[0][2]],
+                               marker='s', color='green', linestyle='None', markersize=6, label='Start from last 20 step')
     ax_3d.plot([full_trajectory[-1][0]], [full_trajectory[-1][1]], [full_trajectory[-1][2]],
                marker='s', color='magenta', markersize=4, label='End')
-    # ax_3d.text(full_trajectory[0][0], full_trajectory[0][1], full_trajectory[0][2] + 0.05 * ranges[2],
+    # ax_3d.text(full_trajectory[0][0], full_trajectory[0][1], full_trajectory[0][2] + 0.05 * (maxs[2] - mins[2]),
     #            'Start', color='green', fontsize=10, ha='center')
-    ax_3d.text(full_trajectory[-1][0], full_trajectory[-1][1], full_trajectory[-1][2] + 0.05 * ranges[2],
+    ax_3d.text(full_trajectory[-1][0], full_trajectory[-1][1], full_trajectory[-1][2] + 0.05 * (maxs[2] - mins[2]),
                'End', color='magenta', fontsize=10, ha='center')
 
     for ax, title, x_label, y_label, x_idx, y_idx in zip(
@@ -337,16 +347,31 @@ def create_combined_animation(df, output_path):
     ):
         ax.set_xlim(mins[x_idx], maxs[x_idx])
         ax.set_ylim(mins[y_idx], maxs[y_idx])
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        ax.set_title(title)
-
-        # 新增起點與終點標記
+        ax.set_xlabel(x_label, fontsize=16)
+        ax.set_ylabel(y_label, fontsize=16)
+        ax.set_title(title, fontsize=18)
+        ax.set_aspect('equal', adjustable='box', anchor='C')
+        ax.tick_params(labelsize=14)
         ax.plot(full_trajectory[0][x_idx], full_trajectory[0][y_idx], 'gs', markersize=4)
         ax.plot(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx], 'ms', markersize=4)
-        # ax.text(full_trajectory[0][x_idx], full_trajectory[0][y_idx] + 0.05 * ranges[y_idx], 'Start', color='green', fontsize=10, ha='center')
-        ax.text(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx] + 0.05 * ranges[y_idx], 'End', color='magenta', fontsize=10, ha='center')
+        # ax.text(full_trajectory[0][x_idx], full_trajectory[0][y_idx] + 0.05 * (maxs[y_idx] - mins[y_idx]), 'Start', color='green', fontsize=10, ha='center')
+        ax.text(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx] + 0.05 * (maxs[y_idx] - mins[y_idx]), 'End', color='magenta', fontsize=10, ha='center')
 
+    # 後續 update 與動畫略...
+
+    # 最後新增圖例（包含 start_marker）
+    ax_3d.legend(
+        handles=[
+            start_marker,                        # 新增 Start 圖例
+            # 其餘物件從已建立的 objs_xy 拿來用（略）
+        ],
+        loc='upper right',
+        framealpha=0.8,
+        edgecolor='white',
+        facecolor='white',
+        fontsize=9
+    )
+    
     # 創建軌跡圖的物件
     def create_plot_objects(ax3d, ax2d, x_idx, y_idx):
         # 3D 物件
@@ -385,9 +410,10 @@ def create_combined_animation(df, output_path):
 
     # 設置角度圖的標籤和範圍
     for ax, title in zip([ax_roll, ax_pitch, ax_yaw], ['Roll', 'Pitch', 'Yaw']):
-        ax.set_xlabel('Step')
-        ax.set_ylabel('Angle (degree)')
-        ax.set_title(f'{title} Angle')
+        ax.set_xlabel('Step', fontsize=16)
+        ax.set_ylabel('Angle (degree)', fontsize=16)
+        ax.set_title(f'{title} Angle', fontsize=18)
+        ax.tick_params(labelsize=14)
         
         # 設置主網格和次網格
         ax.grid(True, which='major', linewidth=0.8, linestyle='-', color='#CCCCCC')
