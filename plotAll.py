@@ -34,13 +34,13 @@ def create_trajectory_animation(df, output_path):
 
     # 建立畫布與 gridspec
     fig = plt.figure(figsize=(16, 8))
-    gs = gridspec.GridSpec(3, 3, width_ratios=[3, 1])  # 3 row, 2 col layout
+    gs = gridspec.GridSpec(3, 2, width_ratios=[2, 1])  # 3 row, 2 col layout
 
     # 子圖分配
-    ax_3d = fig.add_subplot(gs[:, 0:1], projection='3d')   # 左半整排
-    ax_xy = fig.add_subplot(gs[0, 2])                    # 右上
-    ax_yz = fig.add_subplot(gs[1, 2])                    # 右中
-    ax_xz = fig.add_subplot(gs[2, 2])                    # 右下
+    ax_3d = fig.add_subplot(gs[:, 0], projection='3d')   # 左半整排
+    ax_xy = fig.add_subplot(gs[0, 1])                    # 右上
+    ax_yz = fig.add_subplot(gs[1, 1])                    # 右中
+    ax_xz = fig.add_subplot(gs[2, 1])                    # 右下
 
     # 設定 3D 圖
     ax_3d.set_xlim(mins[0], maxs[0])
@@ -304,13 +304,13 @@ def create_combined_animation(df, output_path):
     fig = plt.figure(figsize=(20, 16))
     main_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], hspace=0.3)
     top_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=main_gs[0], width_ratios=[1.2, 1])
-    right_gs = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=top_gs[1], hspace=0.3)
+    right_gs = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=top_gs[1], hspace=0.3, wspace=0.3)
     bottom_gs = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=main_gs[1], wspace=0.3)
 
     ax_3d = fig.add_subplot(top_gs[0], projection='3d')
-    ax_xy = fig.add_subplot(right_gs[0])
-    ax_yz = fig.add_subplot(right_gs[1])
-    ax_xz = fig.add_subplot(right_gs[2])
+    ax_xy = fig.add_subplot(right_gs[0, 0])
+    ax_yz = fig.add_subplot(right_gs[0, 1])
+    ax_xz = fig.add_subplot(right_gs[1,1])
     ax_roll = fig.add_subplot(bottom_gs[0])
     ax_pitch = fig.add_subplot(bottom_gs[1])
     ax_yaw = fig.add_subplot(bottom_gs[2])
@@ -335,7 +335,7 @@ def create_combined_animation(df, output_path):
     # ax_3d.text(full_trajectory[0][0], full_trajectory[0][1], full_trajectory[0][2] + 0.05 * (maxs[2] - mins[2]),
     #            'Start', color='green', fontsize=10, ha='center')
     ax_3d.text(full_trajectory[-1][0], full_trajectory[-1][1], full_trajectory[-1][2] + 0.05 * (maxs[2] - mins[2]),
-               'End', color='magenta', fontsize=10, ha='center')
+               'End', color='magenta', fontsize=12, ha='center')
 
     for ax, title, x_label, y_label, x_idx, y_idx in zip(
         [ax_xy, ax_yz, ax_xz],
@@ -355,7 +355,7 @@ def create_combined_animation(df, output_path):
         ax.plot(full_trajectory[0][x_idx], full_trajectory[0][y_idx], 'gs', markersize=4)
         ax.plot(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx], 'ms', markersize=4)
         # ax.text(full_trajectory[0][x_idx], full_trajectory[0][y_idx] + 0.05 * (maxs[y_idx] - mins[y_idx]), 'Start', color='green', fontsize=10, ha='center')
-        ax.text(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx] + 0.05 * (maxs[y_idx] - mins[y_idx]), 'End', color='magenta', fontsize=10, ha='center')
+        ax.text(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx] + 0.05 * (maxs[y_idx] - mins[y_idx]), 'End', color='magenta', fontsize=12, ha='center')
 
     # 後續 update 與動畫略...
 
