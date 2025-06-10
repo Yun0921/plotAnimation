@@ -16,8 +16,7 @@ def create_trajectory_animation(df, output_path):
         data.append({"at1": at1, "at2": at2, "at2_pred": at2_pred})
 
     # 計算完整軌跡
-    full_trajectory = np.array([d["at1"] for d in data] + [data[-1]["at2"]])
-
+    full_trajectory = np.array([d["at1"] for d in data])
 
     # 計算範圍
     all_points = np.array([d["at1"].tolist() + d["at2"].tolist() + d["at2_pred"].tolist() for d in data]).reshape(-1, 3)
@@ -49,6 +48,7 @@ def create_trajectory_animation(df, output_path):
     ax_3d.set_ylabel("Y (mm)")
     ax_3d.set_zlabel("Z (mm)")
     ax_3d.set_title("3D View")
+    
 
     # 設定平面圖
     for ax, title, x_label, y_label, x_idx, y_idx in zip(
@@ -67,9 +67,9 @@ def create_trajectory_animation(df, output_path):
 
     def create_plot_objects(ax3d, ax2d, x_idx, y_idx):
         # 3D 物件
-        p1_3d, = ax3d.plot([], [], [], 'ko', markersize=4, label='AT1')
-        p2_3d, = ax3d.plot([], [], [], 'ro', markersize=4, label='True AT2')
-        pp_3d, = ax3d.plot([], [], [], 'bo', markersize=4, label='Pred AT2')
+        p1_3d, = ax3d.plot([], [], [], 'ko', markersize=4, label='Current Step')
+        p2_3d, = ax3d.plot([], [], [], 'ro', markersize=4, label='True Next Step')
+        pp_3d, = ax3d.plot([], [], [], 'bo', markersize=4, label='Pred Next Step')
         l12_3d = ax3d.plot([], [], [], 'r-', label='True Path')[0]
         lp_3d = ax3d.plot([], [], [], 'b:', label='Pred Path')[0]
         # 添加 at1 軌跡
@@ -189,7 +189,7 @@ def create_angle_animation(df, output_path):
 
     # 設置角度圖的標籤和範圍
     for ax, title in zip([ax_roll, ax_pitch, ax_yaw], ['Roll', 'Pitch', 'Yaw']):
-        ax.set_xlabel('Pair Index')
+        ax.set_xlabel('Step')
         ax.set_ylabel('Angle (degree)')
         ax.set_title(f'{title} Angle')
         
@@ -274,7 +274,6 @@ def create_angle_animation(df, output_path):
     plt.close()
 
 def create_combined_animation(df, output_path):
-    # 準備資料
     data = []
     for i in range(len(df) - 1):
         at1 = df.loc[i, ["gt_x", "gt_y", "gt_z"]].values
@@ -282,47 +281,30 @@ def create_combined_animation(df, output_path):
         at2_pred = df.loc[i, ["pred_x", "pred_y", "pred_z"]].values
         data.append({"at1": at1, "at2": at2, "at2_pred": at2_pred})
 
-    # 計算完整軌跡
-    full_trajectory = np.array([d["at1"] for d in data])
+    full_trajectory = np.array([d["at1"] for d in data] + [data[-1]["at2"]])
 
-    # 計算範圍
     all_points = np.array([d["at1"].tolist() + d["at2"].tolist() + d["at2_pred"].tolist() for d in data]).reshape(-1, 3)
     mins = all_points.min(axis=0)
     maxs = all_points.max(axis=0)
-
-    # 計算每個維度的範圍大小
     ranges = maxs - mins
     padding = ranges * 0.2
-    mins = mins - padding
-    maxs = maxs + padding
+    mins -= padding
+    maxs += padding
 
-    # 建立畫布與 gridspec
     fig = plt.figure(figsize=(20, 16))
-    
-    # 創建主網格：2行，上面用於軌跡圖，下面用於角度圖 (3:1 比例)
     main_gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], hspace=0.3)
-    
-    # 上半部分的網格，用於軌跡圖 (1列2行，左邊3D圖，右邊三個平面圖)
     top_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=main_gs[0], width_ratios=[1.2, 1])
-    
-    # 右側平面圖的子網格 (3列1行)
     right_gs = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=top_gs[1], hspace=0.3)
-    
-    # 下半部分的網格，用於角度圖
     bottom_gs = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=main_gs[1], wspace=0.3)
 
-    # 分配軌跡圖的子圖
-    ax_3d = fig.add_subplot(top_gs[0], projection='3d')   # 左側3D圖
-    ax_xy = fig.add_subplot(right_gs[0])                  # 右側上方
-    ax_yz = fig.add_subplot(right_gs[1])                  # 右側中間
-    ax_xz = fig.add_subplot(right_gs[2])                  # 右側下方
+    ax_3d = fig.add_subplot(top_gs[0], projection='3d')
+    ax_xy = fig.add_subplot(right_gs[0])
+    ax_yz = fig.add_subplot(right_gs[1])
+    ax_xz = fig.add_subplot(right_gs[2])
+    ax_roll = fig.add_subplot(bottom_gs[0])
+    ax_pitch = fig.add_subplot(bottom_gs[1])
+    ax_yaw = fig.add_subplot(bottom_gs[2])
 
-    # 分配角度圖的子圖
-    ax_roll = fig.add_subplot(bottom_gs[0])    # 下排左
-    ax_pitch = fig.add_subplot(bottom_gs[1])   # 下排中
-    ax_yaw = fig.add_subplot(bottom_gs[2])     # 下排右
-
-    # 設定 3D 圖
     ax_3d.set_xlim(mins[0], maxs[0])
     ax_3d.set_ylim(mins[1], maxs[1])
     ax_3d.set_zlim(mins[2], maxs[2])
@@ -331,7 +313,16 @@ def create_combined_animation(df, output_path):
     ax_3d.set_zlabel("Z (mm)")
     ax_3d.set_title("3D View")
 
-    # 設定平面圖
+    # 新增起點與終點標記
+    ax_3d.plot([full_trajectory[0][0]], [full_trajectory[0][1]], [full_trajectory[0][2]],
+               marker='s', color='green', markersize=4, label='Start')
+    ax_3d.plot([full_trajectory[-1][0]], [full_trajectory[-1][1]], [full_trajectory[-1][2]],
+               marker='s', color='magenta', markersize=4, label='End')
+    ax_3d.text(full_trajectory[0][0], full_trajectory[0][1], full_trajectory[0][2] + 0.05 * ranges[2],
+               'Start', color='green', fontsize=10, ha='center')
+    ax_3d.text(full_trajectory[-1][0], full_trajectory[-1][1], full_trajectory[-1][2] + 0.05 * ranges[2],
+               'End', color='magenta', fontsize=10, ha='center')
+
     for ax, title, x_label, y_label, x_idx, y_idx in zip(
         [ax_xy, ax_yz, ax_xz],
         ["XY Plane", "YZ Plane", "XZ Plane"],
@@ -346,12 +337,18 @@ def create_combined_animation(df, output_path):
         ax.set_ylabel(y_label)
         ax.set_title(title)
 
+        # 新增起點與終點標記
+        ax.plot(full_trajectory[0][x_idx], full_trajectory[0][y_idx], 'gs', markersize=4)
+        ax.plot(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx], 'ms', markersize=4)
+        ax.text(full_trajectory[0][x_idx], full_trajectory[0][y_idx] + 0.05 * ranges[y_idx], 'Start', color='green', fontsize=10, ha='center')
+        ax.text(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx] + 0.05 * ranges[y_idx], 'End', color='magenta', fontsize=10, ha='center')
+
     # 創建軌跡圖的物件
     def create_plot_objects(ax3d, ax2d, x_idx, y_idx):
         # 3D 物件
-        p1_3d, = ax3d.plot([], [], [], 'ko', markersize=4, label='AT1')
-        p2_3d, = ax3d.plot([], [], [], 'ro', markersize=4, label='True AT2')
-        pp_3d, = ax3d.plot([], [], [], 'bo', markersize=4, label='Pred AT2')
+        p1_3d, = ax3d.plot([], [], [], 'ko', markersize=4, label='Current Step')
+        p2_3d, = ax3d.plot([], [], [], 'ro', markersize=4, label='True Next Step')
+        pp_3d, = ax3d.plot([], [], [], 'bo', markersize=4, label='Pred Next Step')
         l12_3d = ax3d.plot([], [], [], 'r-', label='True Path')[0]
         lp_3d = ax3d.plot([], [], [], 'b:', label='Pred Path')[0]
         # 添加 at1 軌跡
@@ -384,7 +381,7 @@ def create_combined_animation(df, output_path):
 
     # 設置角度圖的標籤和範圍
     for ax, title in zip([ax_roll, ax_pitch, ax_yaw], ['Roll', 'Pitch', 'Yaw']):
-        ax.set_xlabel('Pair Index')
+        ax.set_xlabel('Step')
         ax.set_ylabel('Angle (degree)')
         ax.set_title(f'{title} Angle')
         
@@ -529,57 +526,27 @@ def create_combined_animation(df, output_path):
 
 def main():
     # 設定輸入和輸出目錄
-    input_dir = "demo_outputs"
-    output_dir = "animation_results"
+    input_dir = "output_csv"
+    output_dir = "0610_output1"
     
     # 確保輸出目錄存在
     os.makedirs(output_dir, exist_ok=True)
     
-    # 遍歷所有子目錄
-    for subdir in os.listdir(input_dir):
-        subdir_path = os.path.join(input_dir, subdir)
+    csv_files = [f for f in os.listdir(input_dir) if f.endswith('.csv')]
         
-        # 確保是目錄
-        if not os.path.isdir(subdir_path):
-            continue
-            
-        print(f"\n處理目錄: {subdir}")
+    # 處理每個 CSV 文件
+    for csv_file in csv_files:
+        print(f"處理文件: {csv_file}")
         
-        # 🔻這裡不再建立子資料夾
-        # subdir_output = os.path.join(output_dir, subdir)
-        # os.makedirs(subdir_output, exist_ok=True)
+        csv_path = os.path.join(input_dir, csv_file)
+        df = pd.read_csv(csv_path)
         
-        # 獲取該子目錄下的所有 CSV 文件
-        csv_files = [f for f in os.listdir(subdir_path) if f.endswith('.csv')]
+        output_filename = f"{os.path.splitext(csv_file)[0]}_animation.gif"
+        combined_path = os.path.join(output_dir, output_filename)
         
-        # 處理每個 CSV 文件
-        for csv_file in csv_files:
-            print(f"處理文件: {csv_file}")
-            
-            csv_path = os.path.join(subdir_path, csv_file)
-            df = pd.read_csv(csv_path)
-            
-            output_filename = f"{subdir}_{os.path.splitext(csv_file)[0]}_animation.gif"
-            combined_path = os.path.join(output_dir, output_filename)
-            
-            create_combined_animation(df, combined_path)
-            
-            print(f"已生成動畫: {output_filename}")
-
-        # # 讀取 CSV 檔案
-        # csv_path = "demo_patient_07_predictions_last20.csv"
-        # df = pd.read_csv(csv_path)
-
-        # # 確保輸出目錄存在
-        # output_dir = "animation_output"
-        # os.makedirs(output_dir, exist_ok=True)
-
-        # # 創建並保存組合動畫
-        # combined_path = os.path.join(output_dir, "combined_animation.gif")
-        # create_combined_animation(df, combined_path)
-
-        # plt.show()
-
+        create_combined_animation(df, combined_path)
+        
+        print(f"已生成動畫: {output_filename}")
 
 if __name__ == "__main__":
     main() 
