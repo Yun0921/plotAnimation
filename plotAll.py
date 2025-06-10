@@ -7,13 +7,15 @@ import matplotlib.gridspec as gridspec
 import os
 
 def create_trajectory_animation(df, output_path):
-    # 準備資料
+    # 修改為每個 at1 配對相同的最後一個 at2
+    last_at2 = df.loc[len(df) - 1, ["gt_x", "gt_y", "gt_z"]].values
+
     data = []
     for i in range(len(df) - 1):
         at1 = df.loc[i, ["gt_x", "gt_y", "gt_z"]].values
-        at2 = df.loc[i + 1, ["gt_x", "gt_y", "gt_z"]].values
         at2_pred = df.loc[i, ["pred_x", "pred_y", "pred_z"]].values
-        data.append({"at1": at1, "at2": at2, "at2_pred": at2_pred})
+        data.append({"at1": at1, "at2": last_at2, "at2_pred": at2_pred})
+
 
     # 計算完整軌跡
     full_trajectory = np.array([d["at1"] for d in data])
@@ -274,12 +276,14 @@ def create_angle_animation(df, output_path):
     plt.close()
 
 def create_combined_animation(df, output_path):
+    # 修改為每個 at1 配對相同的最後一個 at2
+    last_at2 = df.loc[len(df) - 1, ["gt_x", "gt_y", "gt_z"]].values
+
     data = []
     for i in range(len(df) - 1):
         at1 = df.loc[i, ["gt_x", "gt_y", "gt_z"]].values
-        at2 = df.loc[i + 1, ["gt_x", "gt_y", "gt_z"]].values
         at2_pred = df.loc[i, ["pred_x", "pred_y", "pred_z"]].values
-        data.append({"at1": at1, "at2": at2, "at2_pred": at2_pred})
+        data.append({"at1": at1, "at2": last_at2, "at2_pred": at2_pred})
 
     full_trajectory = np.array([d["at1"] for d in data] + [data[-1]["at2"]])
 
@@ -318,8 +322,8 @@ def create_combined_animation(df, output_path):
                marker='s', color='green', markersize=4, label='Start')
     ax_3d.plot([full_trajectory[-1][0]], [full_trajectory[-1][1]], [full_trajectory[-1][2]],
                marker='s', color='magenta', markersize=4, label='End')
-    ax_3d.text(full_trajectory[0][0], full_trajectory[0][1], full_trajectory[0][2] + 0.05 * ranges[2],
-               'Start', color='green', fontsize=10, ha='center')
+    # ax_3d.text(full_trajectory[0][0], full_trajectory[0][1], full_trajectory[0][2] + 0.05 * ranges[2],
+    #            'Start', color='green', fontsize=10, ha='center')
     ax_3d.text(full_trajectory[-1][0], full_trajectory[-1][1], full_trajectory[-1][2] + 0.05 * ranges[2],
                'End', color='magenta', fontsize=10, ha='center')
 
@@ -340,14 +344,14 @@ def create_combined_animation(df, output_path):
         # 新增起點與終點標記
         ax.plot(full_trajectory[0][x_idx], full_trajectory[0][y_idx], 'gs', markersize=4)
         ax.plot(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx], 'ms', markersize=4)
-        ax.text(full_trajectory[0][x_idx], full_trajectory[0][y_idx] + 0.05 * ranges[y_idx], 'Start', color='green', fontsize=10, ha='center')
+        # ax.text(full_trajectory[0][x_idx], full_trajectory[0][y_idx] + 0.05 * ranges[y_idx], 'Start', color='green', fontsize=10, ha='center')
         ax.text(full_trajectory[-1][x_idx], full_trajectory[-1][y_idx] + 0.05 * ranges[y_idx], 'End', color='magenta', fontsize=10, ha='center')
 
     # 創建軌跡圖的物件
     def create_plot_objects(ax3d, ax2d, x_idx, y_idx):
         # 3D 物件
         p1_3d, = ax3d.plot([], [], [], 'ko', markersize=4, label='Current Step')
-        p2_3d, = ax3d.plot([], [], [], 'ro', markersize=4, label='True Next Step')
+        p2_3d, = ax3d.plot([], [], [], 'ro', markersize=4, label='The Last Step')
         pp_3d, = ax3d.plot([], [], [], 'bo', markersize=4, label='Pred Next Step')
         l12_3d = ax3d.plot([], [], [], 'r-', label='True Path')[0]
         lp_3d = ax3d.plot([], [], [], 'b:', label='Pred Path')[0]
@@ -434,8 +438,14 @@ def create_combined_animation(df, output_path):
         ax.set_ylim(y_min, y_max)
 
     # 只在 3D 圖中添加圖例
+    # 加入 Start 標記物件
+    start_marker, = ax_3d.plot([full_trajectory[0][0]], [full_trajectory[0][1]], [full_trajectory[0][2]],
+                    marker='s', color='green', linestyle='None', markersize=6, label='Start from last 20 step')
+
+    # 加入圖例，包含 Start
     ax_3d.legend(
         handles=[
+            start_marker,                        # 新增 Start 圖例
             objs_xy[0], objs_xy[1], objs_xy[2],  # 點
             objs_xy[3], objs_xy[4],              # 線
             objs_xy[5], objs_xy[6]               # 軌跡
@@ -527,7 +537,7 @@ def create_combined_animation(df, output_path):
 def main():
     # 設定輸入和輸出目錄
     input_dir = "output_csv"
-    output_dir = "0610_output1"
+    output_dir = "0610_output"
     
     # 確保輸出目錄存在
     os.makedirs(output_dir, exist_ok=True)
