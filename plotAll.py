@@ -562,9 +562,9 @@ def create_combined_animation(df, output_path):
 
 def main():
     # 設定輸入和輸出目錄
-    input_dir = "RSSM"
-    output_dir = "rssm_output"
-    
+    input_dir = "transformer_csv"
+    output_dir = "output_gif"
+
     # 確保輸出目錄存在
     os.makedirs(output_dir, exist_ok=True)
     
