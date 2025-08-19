@@ -562,8 +562,8 @@ def create_combined_animation(df, output_path):
 
 def main():
     # 設定輸入和輸出目錄
-    input_dir = "output_csv"
-    output_dir = "0610_output"
+    input_dir = "RSSM"
+    output_dir = "rssm_output"
     
     # 確保輸出目錄存在
     os.makedirs(output_dir, exist_ok=True)
